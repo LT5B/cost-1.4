@@ -11,34 +11,34 @@ Install
 ```sudo bash "$(curl -fsSL https://raw.githubusercontent.com/LT5B/cost-1.4/refs/heads/main/install.sh | bash)"```
 
 Features
-📦 Simple package management
-⚡ Lightweight Bash implementation
-🖥️ Command-line interface
-🔍 Search for available packages
-📥 Install packages
-🗑️ Remove packages
-🔄 Update packages
-📋 View package information
-🧩 Designed to be easy to extend
-🐧 Built for Unix-like environments
+- 📦 Simple package management
+- ⚡ Lightweight Bash implementation
+- 🖥️ Command-line interface
+- 🔍 Search for available packages
+- 📥 Install packages
+- 🗑️ Remove packages
+- 🔄 Update packages
+- 📋 View package information
+- 🧩 Designed to be easy to extend
+- 🐧 Built for Unix-like environments
 
 Philosophy
 
 Cost is designed around three principles:
 
 Simplicity
-Package management should not require complicated commands.
+- Package management should not require complicated commands.
 Lightweight Design
-Cost is implemented as a Bash script, keeping the project small and easy to inspect.
+- Cost is implemented as a Bash script, keeping the project small and easy to inspect.
 Ease of Use
-Commands should be understandable and predictable for users.
+- Commands should be understandable and predictable for users.
 Requirements
 
 Cost requires:
 
 Bash
-A Unix-like operating system
-Standard command-line utilities
+- A Unix-like operating system
+- Standard command-line utilities
 
 Version
 
