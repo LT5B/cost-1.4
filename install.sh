@@ -82,6 +82,7 @@ case "$TYPE" in
                     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
                     [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
                     [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on macOS."
@@ -101,6 +102,7 @@ case "$TYPE" in
                     chmod -R +x "/opt/cost/cellar/$1/bin"
                     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
                     [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on Linux."
@@ -126,6 +128,7 @@ case "$TYPE" in
                     chmod -R +x "/opt/cost/cellar/$1/bin"
                     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
                     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
+                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on macOS."
@@ -148,6 +151,7 @@ case "$TYPE" in
                     chmod -R +x "/opt/cost/cellar/$1/bin"
                     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
                     [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on Linux."
