@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "==> Making folder..."
+echo "==> Creating directories..."
 sudo mkdir -p "/opt/cost"
 sudo mkdir -p "/opt/cost/bin"
 sudo mkdir -p "/opt/cost/doc"
@@ -10,37 +10,42 @@ sudo mkdir -p "/opt/cost/ruby"
 sudo mkdir -p "/opt/cost/cellar"
 sudo mkdir -p "/opt/cost/flag"
 sudo mkdir -p "/opt/cost/applications"
+
+# Fix Permission: Grant ownership of the /opt/cost directory to the current user
+sudo chown -R $USER "/opt/cost"
 sleep 1
 
-echo "==> Making repository installer script..."
+echo "==> Downloading and compiling Git..."
 curl -sL -O https://www.kernel.org/pub/software/scm/git/git-2.55.0.tar.gz
 tar zxf git-2.55.0.tar.gz
 rm git-2.55.0.tar.gz
 cd git-2.55.0
 ./configure
+make
+sudo make install
 cd ..
 rm -rf git-2.55.0
 sleep 1
 
-echo "==> Making main executable file..."
+echo "==> Creating the main executable..."
 cat << 'EOF' > "/opt/cost/bin/cost"
 #!/bin/bash
 
-if [ -z "$@" ]; then
-    echo "Run 'cost help' to see the usage"
+if [ -z "$1" ]; then
+    echo "Run 'cost help' to see usage information."
     exit 1
 fi
 
-if [ ! -f "/opt/cost/flag/$@" ]; then
-    bash "/opt/cost/flag/$@"
+if [ ! -f "/opt/cost/flag/$1" ]; then
+    echo "Cost: Command not found: cost $1"
+    exit 1
 else
-    bash "/opt/cost/flag/$@"
-    echo "Cost: Command not found: cost $@"
+    bash "/opt/cost/flag/$1" "${@:2}"
 fi
 EOF
 sleep 1
 
-echo "==> Making flags..."
+echo "==> Creating command flags..."
 cat << 'EOF' > "/opt/cost/flag/install"
 #!/bin/bash
 
@@ -49,9 +54,9 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-if [ ! -f "/opt/cost/flag/$@" ]; then
-    echo "==> Cloning $1..."
-        bash "/opt/cost/packages/$1.cellar"
+if [ ! -f "/opt/cost/cellar/$1" ]; then
+    echo "==> Installing $1..."
+        bash "/opt/cost/packages/$1.cellar" 2>/dev/null || true
 
         case "$type" in
             "Formula"|"Formulae"|"Package")
@@ -59,28 +64,28 @@ if [ ! -f "/opt/cost/flag/$@" ]; then
                     case "$MacOS" in
                         "True"|"Yes")
                             git clone -q "$REPOSITORY"
-                            cp "$HOME/$1" "/opt/cost/cellar/$1"
+                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                             rm -rf "$HOME/$1"
                             ;;
                         "False"|"No")
-                            echo "Cost: This package is not supported on your MacOS"
+                            echo "Cost: This package is not supported on macOS."
                             ;;
                         *)
-                            echo "Cost: Can't install this package"
+                            echo "Cost: Cannot install this package."
                             ;;
                     esac
                 else
                     case "$Linux" in
                         "True"|"Yes")
                             git clone -q "$REPOSITORY"
-                            cp "$HOME/$1" "/opt/cost/cellar/$@"
+                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                             rm -rf "$HOME/$1"
                             ;;
                         "False"|"No")
-                            echo "Cost: This package is not supported on your Linux"
+                            echo "Cost: This package is not supported on Linux."
                             ;;
                         *)
-                            echo "Cost: Can't install this package"
+                            echo "Cost: Cannot install this package."
                             ;;
                     esac
                 fi
@@ -90,42 +95,43 @@ if [ ! -f "/opt/cost/flag/$@" ]; then
                     case "$MacOS" in
                         "True"|"Yes")
                             git clone -q "$REPOSITORY"
-                            cp "$HOME/$@" "/opt/cost/cellar/$1"
-                            zip "/opt/cost/cellar/$1"
+                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                            zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
                             cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.app"
                             rm "/opt/cost/cellar/$1.zip"
                             ;;
                         "False"|"No")
-                            echo "Cost: This application not supported on your MacOS"
+                            echo "Cost: This application is not supported on macOS."
                             ;;
                         *)
-                            echo "Cost: Can't install this application"
+                            echo "Cost: Cannot install this application."
                             ;;
                     esac
                 else
                     case "$Linux" in
                         "True"|"Yes")
                             git clone -q "$REPOSITORY"
-                            cp "$HOME/$1" "/opt/cost/cellar/$1"
-                            zip "/opt/cost/cellar/$1"
-                            cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$@.darwin"
+                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                            zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
+                            cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.darwin"
                             rm "/opt/cost/cellar/$1.zip"   
                             ;;
-                            "False"|"No")
-                            echo "Cost: This package is not supported on your Linux"
+                        "False"|"No")
+                            echo "Cost: This application is not supported on Linux."
                             ;;
                         *)
-                            echo "Cost: Can't install this application"
+                            echo "Cost: Cannot install this application."
                             ;;
                     esac
                 fi
+esac
 fi
 
-echo 'export PATH="$PATH:/opt/cost/cellar/$@"' >> "$HOME/.bashrc"
-echo 'export PATH="$PATH:/opt/cost/cellar/$@"' >> "$HOME/.bashrc"
+echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.bashrc"
+echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.zshrc"
 
-source "$HOME/.bashrc"
-source "$HOME/.zshrc"
+[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
 
 EOF
 
@@ -179,7 +185,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-if [ ! -f "/opt/cost/packages/$1.cellar" ]; then
+if [ -f "/opt/cost/packages/$1.cellar" ]; then
     cat "/opt/cost/packages/$1.cellar"
 else
     echo "Cost: Package not found: $1"
@@ -193,11 +199,11 @@ cat << 'EOF' > "/opt/cost/flag/create"
 read -p "Name: " name
 read -p "Author: " author
 read -p "Type: " type
-read -p "Can run on MacOS: " darwin
-read -p "Can run on Linux: " linux
+read -p "Supported on macOS (True/False): " darwin
+read -p "Supported on Linux (True/False): " linux
 read -p "Repository URL: " REPOSITORY
 
-cat << 'EOS' > "/opt/cost/library/$name.cellar"
+cat << EOS > "/opt/cost/library/$name.cellar"
 NAME="$name"
 AUTHOR="$author"
 TYPE="$type"
@@ -222,7 +228,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-if [ ! -f "/opt/cost/library/$1" ]; then
+if [ -f "/opt/cost/library/$1" ]; then
     rm "/opt/cost/library/$1"
 else
     echo "Cost: Package not found: $1"
@@ -234,8 +240,8 @@ cat << 'EOF' > "/opt/cost/flag/search"
 #!/bin/bash
 find "/opt/cost/packages" -type f | while read -r filepath; do
     basename="${filepath%.*}"
-echo "cost install:
-echo "$basename"
+    echo "cost install:"
+    echo "$basename"
 done
 EOF
 
@@ -259,17 +265,17 @@ cat << 'EOF' > "/opt/cost/flag/copyright"
 cat "/opt/cost/doc/copyright.md"
 EOF
 
-cat << 'EOF' > "/opt/cost/flag/set-version
+cat << 'EOF' > "/opt/cost/flag/set-version"
 #!/bin/bash
 
-if [ -z "$@" ]; then
+if [ -z "$1" ]; then
     echo "Usage: cost set-version <version>"
     exit 1
 fi
 
 sudo rm -rf "/opt/cost"
 git clone -q https://github.com/LT5B/cost-${1}
-cd cost-$@
+cd cost-$1
 sudo ./install.sh
 EOF
 
@@ -279,7 +285,7 @@ ruby "/opt/cost/ruby/sync.rb"
 EOF
 
 sleep 1
-echo "Making doc..."
+echo "==> Creating documentation..."
 cat << 'EOF' > "/opt/cost/doc/license.md"
 # COST LICENSE
 
@@ -631,22 +637,6 @@ Example:
     ├── python/
     └── node/
 
-PACKAGE DIRECTORY
-
-Cost stores installed packages in its cellar directory:
-
-/opt/cost/cellar
-
-The directory can contain package files and package-specific installation data.
-
-Example:
-
-/opt/cost/
-└── cellar/
-    ├── lua/
-    ├── python/
-    └── node/
-
 EXAMPLES
 Install a programming language
 cost install lua
@@ -717,7 +707,7 @@ cat << 'EOF' > "/opt/cost/doc/version.md"
 Cost 1.4
 EOF
 
-echo "Making ruby file..."
+echo "==> Creating Ruby scripts..."
 cat << 'EOF' > "/opt/cost/ruby/sync.rb"
 #!/usr/bin/env ruby
 require 'etc'
@@ -808,7 +798,7 @@ unless File.exist?(source_path)
 end
 
 if File.directory?(source_path)
-  puts "Error: This is a directory. Please provide a file instead!"
+  puts "Error: This is a directory. Please provide a file path instead!"
   exit 1
 end
 
@@ -834,12 +824,13 @@ rescue => e
 end
 EOF
 
-echo "Granting execution authority..."
+echo "==> Granting execution permissions..."
 chmod +x /opt/cost/bin/cost
 chmod -R +x /opt/cost/flag
 echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
 echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
-source "$HOME/.zshrc"
-source "$HOME/.bashrc"
 
-echo "Installed done!"
+[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
+[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+
+echo "Installation complete!"
