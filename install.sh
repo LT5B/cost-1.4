@@ -54,85 +54,111 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-if [ ! -f "/opt/cost/cellar/$1" ]; then
-    echo "==> Installing $1..."
-        bash "/opt/cost/packages/$1.cellar" 2>/dev/null || true
+PACKAGE_FILE="/opt/cost/packages/$1.cellar"
 
-        case "$type" in
-            "Formula"|"Formulae"|"Package")
-                if [[ "$OSTYPE" == "darwin"* ]]; then
-                    case "$MacOS" in
-                        "True"|"Yes")
-                            git clone -q "$REPOSITORY"
-                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
-                            rm -rf "$HOME/$1"
-                            ;;
-                        "False"|"No")
-                            echo "Cost: This package is not supported on macOS."
-                            ;;
-                        *)
-                            echo "Cost: Cannot install this package."
-                            ;;
-                    esac
-                else
-                    case "$Linux" in
-                        "True"|"Yes")
-                            git clone -q "$REPOSITORY"
-                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
-                            rm -rf "$HOME/$1"
-                            ;;
-                        "False"|"No")
-                            echo "Cost: This package is not supported on Linux."
-                            ;;
-                        *)
-                            echo "Cost: Cannot install this package."
-                            ;;
-                    esac
-                fi
-                ;;
-            "Application"|"App"|"Apps"|"Applications")
-                if [[ "$OSTYPE" == "darwin"* ]]; then
-                    case "$MacOS" in
-                        "True"|"Yes")
-                            git clone -q "$REPOSITORY"
-                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
-                            zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
-                            cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.app"
-                            rm "/opt/cost/cellar/$1.zip"
-                            ;;
-                        "False"|"No")
-                            echo "Cost: This application is not supported on macOS."
-                            ;;
-                        *)
-                            echo "Cost: Cannot install this application."
-                            ;;
-                    esac
-                else
-                    case "$Linux" in
-                        "True"|"Yes")
-                            git clone -q "$REPOSITORY"
-                            cp -r "$HOME/$1" "/opt/cost/cellar/$1"
-                            zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
-                            cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.darwin"
-                            rm "/opt/cost/cellar/$1.zip"   
-                            ;;
-                        "False"|"No")
-                            echo "Cost: This application is not supported on Linux."
-                            ;;
-                        *)
-                            echo "Cost: Cannot install this application."
-                            ;;
-                    esac
-                fi
-esac
+if [ ! -f "$PACKAGE_FILE" ]; then
+    echo "Cost: Package config not found: $1"
+    exit 1
 fi
+
+echo "==> Installing $1..."
+# Source the package configuration to load variables safely
+source "$PACKAGE_FILE"
+
+if [ -z "$REPOSITORY" ]; then
+    echo "Cost: Repository URL is missing in package configuration."
+    exit 1
+fi
+
+case "$TYPE" in
+    "Formula"|"Formulae"|"Package")
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            case "$MacOS" in
+                "True"|"Yes")
+                    git clone -q "$REPOSITORY" "$HOME/$1"
+                    cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                    rm -rf "$HOME/$1"
+                    ;;
+                "False"|"No")
+                    echo "Cost: This package is not supported on macOS."
+                    exit 1
+                    ;;
+                *)
+                    echo "Cost: Cannot install this package."
+                    exit 1
+                    ;;
+            esac
+        else
+            case "$Linux" in
+                "True"|"Yes")
+                    git clone -q "$REPOSITORY" "$HOME/$1"
+                    cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                    rm -rf "$HOME/$1"
+                    ;;
+                "False"|"No")
+                    echo "Cost: This package is not supported on Linux."
+                    exit 1
+                    ;;
+                *)
+                    echo "Cost: Cannot install this package."
+                    exit 1
+                    ;;
+            esac
+        fi
+        ;;
+    "Application"|"App"|"Apps"|"Applications")
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            case "$MacOS" in
+                "True"|"Yes")
+                    git clone -q "$REPOSITORY" "$HOME/$1"
+                    cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                    zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
+                    cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.app"
+                    rm "/opt/cost/cellar/$1.zip"
+                    rm -rf "$HOME/$1"
+                    ;;
+                "False"|"No")
+                    echo "Cost: This application is not supported on macOS."
+                    exit 1
+                    ;;
+                *)
+                    echo "Cost: Cannot install this application."
+                    exit 1
+                    ;;
+            esac
+        else
+            case "$Linux" in
+                "True"|"Yes")
+                    git clone -q "$REPOSITORY" "$HOME/$1"
+                    cp -r "$HOME/$1" "/opt/cost/cellar/$1"
+                    zip -r "/opt/cost/cellar/$1.zip" "/opt/cost/cellar/$1"
+                    cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.darwin"
+                    rm "/opt/cost/cellar/$1.zip"
+                    rm -rf "$HOME/$1"
+                    ;;
+                "False"|"No")
+                    echo "Cost: This application is not supported on Linux."
+                    exit 1
+                    ;;
+                *)
+                    echo "Cost: Cannot install this application."
+                    exit 1
+                    ;;
+            esac
+        fi
+        ;;
+    *)
+        echo "Cost: Unknown package type: $TYPE"
+        exit 1
+        ;;
+esac
 
 echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.bashrc"
 echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.zshrc"
 
 [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
 [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
-
+echo "==> Successfully installed $1!"
 EOF
 
 cat << 'EOF' > "/opt/cost/flag/uninstall"
@@ -143,11 +169,11 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-if [ ! -f "/opt/cost/cellar/$1" ]; then
+if [ -d "/opt/cost/cellar/$1" ]; then
     sudo rm -rf "/opt/cost/cellar/$1"
+    echo "Cost: Removed package $1"
 else
-    echo "Cost: Package not found: $1"
-    sudo rm -rf "/opt/cost/cellar/$1"
+    echo "Cost: Package not found in cellar: $1"
     exit 1
 fi
 EOF
@@ -370,6 +396,31 @@ LT5B
 Cost is an independent Bash project created to make package management more accessible through a simple command-line experience.
 
 Cost — Simple package management, powered by Bash.
+EOF
+
+cat << 'EOF' > "/opt/cost/doc/help.md"
+# COST HELP
+
+Cost is a lightweight Bash package manager.
+
+## Available Commands:
+- cost install <package>    : Install a package
+- cost uninstall <package>  : Remove an installed package
+- cost search               : Search available packages
+- cost info <package>       : Show package details
+- cost create               : Create a new local package config
+- cost publish              : Publish a package to repository
+- cost delete-project <pkg> : Remove project file
+- cost sync                 : Sync packages between users
+- cost set-version <ver>    : Switch/update cost version
+- cost readme               : Show project readme
+- cost license              : Show project license
+- cost manual               : Show full manual
+- cost version              : Show version information
+- cost copyright            : Show copyright notices
+- cost owner                : Show author name
+- cost owner-email          : Show author contact email
+- cost agents               : Show project architectural guidelines
 EOF
 
 cat << 'EOF' > "/opt/cost/doc/agents.md"
