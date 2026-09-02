@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# Get the actual user and home directory even if run with sudo
+# Get the actual user and home directory safely across Linux/macOS
 ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
-if [ -z "$ACTUAL_HOME" ]; then
-    ACTUAL_HOME=$(eval echo "~$ACTUAL_USER")
-fi
+ACTUAL_HOME=$(eval echo "~$ACTUAL_USER")
 
 echo "==> Creating directories..."
 sudo mkdir -p "/opt/cost"
