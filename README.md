@@ -50,6 +50,10 @@ Author
 
 LT5B
 
+Logo
+
+<img width="447" height="447" alt="images (4)" src="https://github.com/user-attachments/assets/26ceec42-47b8-4f20-8e47-2a7b8550d945" />
+
 Cost is an independent Bash project created to make package management more accessible through a simple command-line experience.
 
 Cost — Simple package management, powered by Bash.
