@@ -15,16 +15,16 @@ sudo mkdir -p "/opt/cost/applications"
 sudo chown -R $USER "/opt/cost"
 sleep 1
 
-echo "==> Downloading and compiling Git..."
+echo "==> Downloading and compiling Git from source (no external packages)..."
+cd /tmp
 curl -sL -O https://www.kernel.org/pub/software/scm/git/git-2.55.0.tar.gz
 tar zxf git-2.55.0.tar.gz
-rm git-2.55.0.tar.gz
 cd git-2.55.0
 ./configure
 make
 sudo make install
-cd ..
-rm -rf git-2.55.0
+cd /opt/cost
+rm -rf /tmp/git-2.55.0*
 sleep 1
 
 echo "==> Creating the main executable..."
