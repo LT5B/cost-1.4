@@ -927,4 +927,7 @@ if [ -f "$ACTUAL_HOME/.zshrc" ] && ! grep -q "/opt/cost/bin" "$ACTUAL_HOME/.zshr
     echo 'export PATH="$PATH:/opt/cost/bin"' >> "$ACTUAL_HOME/.zshrc"
 fi
 
-echo "Installation complete! Please restart your terminal or run 'source ~/.bashrc' / 'source ~/.zshrc' to apply changes."
+source "$HOME/.bashrc"
+source "$HOME/.zshrc"
+
+echo "Installation complete!"
