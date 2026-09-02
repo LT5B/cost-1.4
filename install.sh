@@ -77,6 +77,7 @@ case "$TYPE" in
                     git clone -q "$REPOSITORY" "$HOME/$1"
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
+                    chmod -R +x "/opt/cost/cellar/$1/bin"
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on macOS."
@@ -93,6 +94,7 @@ case "$TYPE" in
                     git clone -q "$REPOSITORY" "$HOME/$1"
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
+                    chmod -R +x "/opt/cost/cellar/$1/bin"
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on Linux."
@@ -115,6 +117,7 @@ case "$TYPE" in
                     cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.app"
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
+                    chmod -R +x "/opt/cost/cellar/$1/bin"
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on macOS."
@@ -134,6 +137,7 @@ case "$TYPE" in
                     cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.darwin"
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
+                    chmod -R +x "/opt/cost/cellar/$1/bin"
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on Linux."
