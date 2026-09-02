@@ -78,6 +78,10 @@ case "$TYPE" in
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
                     chmod -R +x "/opt/cost/cellar/$1/bin"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
+                    [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
+                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on macOS."
@@ -95,6 +99,8 @@ case "$TYPE" in
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
                     chmod -R +x "/opt/cost/cellar/$1/bin"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
+                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on Linux."
@@ -118,6 +124,8 @@ case "$TYPE" in
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
                     chmod -R +x "/opt/cost/cellar/$1/bin"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on macOS."
@@ -138,6 +146,8 @@ case "$TYPE" in
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
                     chmod -R +x "/opt/cost/cellar/$1/bin"
+                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
+                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on Linux."
