@@ -21,8 +21,8 @@ curl -sL -O https://www.kernel.org/pub/software/scm/git/git-2.55.0.tar.gz
 tar zxf git-2.55.0.tar.gz
 cd git-2.55.0
 ./configure
-make
-sudo make install
+make 2>/dev/null
+sudo make install 2>/dev/null
 rm -rf /tmp/git-2.55.0*
 sleep 1
 
