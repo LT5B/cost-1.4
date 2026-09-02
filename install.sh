@@ -23,7 +23,6 @@ cd git-2.55.0
 ./configure
 make
 sudo make install
-cd /opt/cost
 rm -rf /tmp/git-2.55.0*
 sleep 1
 
