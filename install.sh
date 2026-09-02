@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Get the actual user and home directory even if run with sudo
+ACTUAL_USER="${SUDO_USER:-$USER}"
+ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
+if [ -z "$ACTUAL_HOME" ]; then
+    ACTUAL_HOME=$(eval echo "~$ACTUAL_USER")
+fi
+
 echo "==> Creating directories..."
 sudo mkdir -p "/opt/cost"
 sudo mkdir -p "/opt/cost/bin"
@@ -12,7 +19,7 @@ sudo mkdir -p "/opt/cost/flag"
 sudo mkdir -p "/opt/cost/applications"
 
 # Fix Permission: Grant ownership of the /opt/cost directory to the current user
-sudo chown -R $USER "/opt/cost"
+sudo chown -R "$ACTUAL_USER" "/opt/cost"
 sleep 1
 
 echo "==> Downloading and compiling Git from source (no external packages)..."
@@ -23,6 +30,7 @@ cd git-2.55.0
 ./configure
 make 2>/dev/null
 sudo make install 2>/dev/null
+cd /tmp
 rm -rf /tmp/git-2.55.0*
 sleep 1
 
@@ -69,6 +77,9 @@ if [ -z "$REPOSITORY" ]; then
     exit 1
 fi
 
+# Ensure bin exists
+mkdir -p "/opt/cost/cellar/$1/bin"
+
 case "$TYPE" in
     "Formula"|"Formulae"|"Package")
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -77,12 +88,12 @@ case "$TYPE" in
                     git clone -q "$REPOSITORY" "$HOME/$1"
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
-                    chmod -R +x "/opt/cost/cellar/$1/bin"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
-                    [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
-                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
+                    chmod -R +x "/opt/cost/cellar/$1/bin" 2>/dev/null || true
+                    
+                    # Create symlinks in /opt/cost/bin instead of moving to /usr/local/bin
+                    if [ -d "/opt/cost/cellar/$1/bin" ] && [ "$(ls -A /opt/cost/cellar/$1/bin 2>/dev/null)" ]; then
+                        ln -sf "/opt/cost/cellar/$1/bin/"* "/opt/cost/bin/"
+                    fi
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on macOS."
@@ -99,10 +110,11 @@ case "$TYPE" in
                     git clone -q "$REPOSITORY" "$HOME/$1"
                     cp -r "$HOME/$1" "/opt/cost/cellar/$1"
                     rm -rf "$HOME/$1"
-                    chmod -R +x "/opt/cost/cellar/$1/bin"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
-                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
+                    chmod -R +x "/opt/cost/cellar/$1/bin" 2>/dev/null || true
+                    
+                    if [ -d "/opt/cost/cellar/$1/bin" ] && [ "$(ls -A /opt/cost/cellar/$1/bin 2>/dev/null)" ]; then
+                        ln -sf "/opt/cost/cellar/$1/bin/"* "/opt/cost/bin/"
+                    fi
                     ;;
                 "False"|"No")
                     echo "Cost: This package is not supported on Linux."
@@ -125,10 +137,11 @@ case "$TYPE" in
                     cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.app"
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
-                    chmod -R +x "/opt/cost/cellar/$1/bin"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
-                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
+                    chmod -R +x "/opt/cost/cellar/$1/bin" 2>/dev/null || true
+                    
+                    if [ -d "/opt/cost/cellar/$1/bin" ] && [ "$(ls -A /opt/cost/cellar/$1/bin 2>/dev/null)" ]; then
+                        ln -sf "/opt/cost/cellar/$1/bin/"* "/opt/cost/bin/"
+                    fi
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on macOS."
@@ -148,10 +161,11 @@ case "$TYPE" in
                     cp "/opt/cost/cellar/$1.zip" "/opt/cost/applications/$1.darwin"
                     rm "/opt/cost/cellar/$1.zip"
                     rm -rf "$HOME/$1"
-                    chmod -R +x "/opt/cost/cellar/$1/bin"
-                    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
-                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-                    mv "/opt/cost/cellar/$1/bin"/* /usr/local/bin/
+                    chmod -R +x "/opt/cost/cellar/$1/bin" 2>/dev/null || true
+                    
+                    if [ -d "/opt/cost/cellar/$1/bin" ] && [ "$(ls -A /opt/cost/cellar/$1/bin 2>/dev/null)" ]; then
+                        ln -sf "/opt/cost/cellar/$1/bin/"* "/opt/cost/bin/"
+                    fi
                     ;;
                 "False"|"No")
                     echo "Cost: This application is not supported on Linux."
@@ -170,11 +184,15 @@ case "$TYPE" in
         ;;
 esac
 
-echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.bashrc"
-echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.zshrc"
+# Safely add cellar path if not already present
+if [ -f "$HOME/.bashrc" ] && ! grep -q "/opt/cost/cellar/$1" "$HOME/.bashrc"; then
+    echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.bashrc"
+fi
+if [ -f "$HOME/.zshrc" ] && ! grep -q "/opt/cost/cellar/$1" "$HOME/.zshrc"; then
+    echo "export PATH=\"\$PATH:/opt/cost/cellar/$1\"" >> "$HOME/.zshrc"
+fi
 
-[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
+export PATH="$PATH:/opt/cost/cellar/$1"
 echo "==> Successfully installed $1!"
 EOF
 
@@ -188,6 +206,10 @@ fi
 
 if [ -d "/opt/cost/cellar/$1" ]; then
     sudo rm -rf "/opt/cost/cellar/$1"
+    
+    # Optional: Clean up broken symlinks in /opt/cost/bin
+    find "/opt/cost/bin" -type l ! -exec test -e {} \; -delete
+    
     echo "Cost: Removed package $1"
 else
     echo "Cost: Package not found in cellar: $1"
@@ -273,6 +295,7 @@ fi
 
 if [ -f "/opt/cost/library/$1" ]; then
     rm "/opt/cost/library/$1"
+    echo "Cost: Project $1 deleted."
 else
     echo "Cost: Package not found: $1"
     exit 1
@@ -283,8 +306,8 @@ cat << 'EOF' > "/opt/cost/flag/search"
 #!/bin/bash
 find "/opt/cost/packages" -type f | while read -r filepath; do
     basename="${filepath%.*}"
-    echo "cost install:"
-    echo "$basename"
+    basename="${basename##*/}"
+    echo "cost install: $basename"
 done
 EOF
 
@@ -814,19 +837,20 @@ Etc.passwd do |user|
 end
 
 all_users.each do |user|
-  # next if user.name == source_user
+  next if user.name == source_user
 
-  target_dir = "/opt/cost/packages"
-
-  # target_dir = File.join(user.dir, "opt/cost/packages")
+  # Target directory logic fixed to actually sync to user's home structure
+  target_dir = File.join(user.dir, ".cost/packages")
 
   puts "[*] Copying packages for user: #{user.name}..."
   
   begin
     FileUtils.mkdir_p(target_dir)
+    File.chown(user.uid, user.gid, File.join(user.dir, ".cost")) rescue nil
+    File.chown(user.uid, user.gid, target_dir) rescue nil
     
     Dir.glob("#{source_dir}/**/*").each do |item|
-      next if File.directory?(item) # Directories are handled via mkdir_p or file copying
+      next if File.directory?(item)
       
       rel_path = item.sub("#{source_dir}/", "")
       dest_file = File.join(target_dir, rel_path)
@@ -834,6 +858,7 @@ all_users.each do |user|
       FileUtils.mkdir_p(File.dirname(dest_file))
       FileUtils.cp_r(item, dest_file, remove_destination: true)
       
+      File.chown(user.uid, user.gid, File.dirname(dest_file)) rescue nil
       File.chown(user.uid, user.gid, dest_file) rescue nil
     end
     puts "[+] Success: #{user.name}"
@@ -895,10 +920,14 @@ EOF
 echo "==> Granting execution permissions..."
 chmod +x /opt/cost/bin/cost
 chmod -R +x /opt/cost/flag
-echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.bashrc"
-echo 'export PATH="$PATH:/opt/cost/bin"' >> "$HOME/.zshrc"
 
-[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc"
-[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+# Check and append PATH safely without redundant duplication
+if [ -f "$ACTUAL_HOME/.bashrc" ] && ! grep -q "/opt/cost/bin" "$ACTUAL_HOME/.bashrc"; then
+    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$ACTUAL_HOME/.bashrc"
+fi
 
-echo "Installation complete!"
+if [ -f "$ACTUAL_HOME/.zshrc" ] && ! grep -q "/opt/cost/bin" "$ACTUAL_HOME/.zshrc"; then
+    echo 'export PATH="$PATH:/opt/cost/bin"' >> "$ACTUAL_HOME/.zshrc"
+fi
+
+echo "Installation complete! Please restart your terminal or run 'source ~/.bashrc' / 'source ~/.zshrc' to apply changes."
